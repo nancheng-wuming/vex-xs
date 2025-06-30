@@ -25,10 +25,10 @@ namespace tjulib
         const double PI = 3.14159265358979323846;
 
     protected:
-    public:
-        Ordi_StraChassis(std::vector<std::vector<vex::motor *> *> &_chassisMotors,pidControl *_fwdpid, pidControl *_turnpid)
+     public:
+        Ordi_StraChassis(std::vector<std::vector<vex::motor *> *> &_chassisMotors,pidControl *_fwdpid, pidControl *_turnpid,Position *_position)
             : Ordi_BaseChassis(_chassisMotors, _fwdpid, _turnpid),
-              fwdControl(_fwdpid), turnControl(_turnpid) {}
+              fwdControl(_fwdpid), turnControl(_turnpid), position(_position) {}
 
         // 把角度转换到360度以内
         double getWrap360(double currentAngle)
@@ -60,11 +60,59 @@ namespace tjulib
             timer mytime;
             mytime.clear();
             // 定义变量和初始化参数
-            T finalTurnSpeed = 0;
+            T finalTunSpeed = 0;
             T targetangle = angle;
-            
-            
-            fwdControl->resetpid();
+             turnControl->resetpid();
+            angle=getWrap360(angle);
+            // 循环判断条件：是否到达指定容差内指定时间以上（这里用循环次数代表时间）
+            // 自行填写（用pidControl类里面的函数）
+            while (!fwdControl->overflag()) 
+            {
+                // 计算当前误差（还需要往前走多少）
+                T nowangle = imu.heading();//imu缺参条件下返回角度制
+                T Error=angle-nowangle;
+                // 自行填写
+                // 如果当前误差已在容差范围内，则增加cnt计数
+                // 自行填写（用pidPara里面的参数进行判断）
+                if (fabs(Error)<turnControl->params->errorThreshold)
+                {
+                    turnControl->cnt++;
+                }
+                // 如果超过了给定的maxtime，则退出循环
+                if (mytime.time(msec) >= maxtime_ms)
+                {
+                    break;
+                }
+                // 用pid控制器计算速度
+                // 自行填写
+                finalTunSpeed = 0;
+                finalTunSpeed = turnControl->pidCalcu(angle,maxSpeed,nowangle);
+
+                // 控制最小速度，让车辆底盘的电压至少能够克服阻力
+                if (fabs(finalTunSpeed)<turnControl->params->minSpeed) 
+                    {
+                        if(finalTunSpeed >= 0)
+                        {
+                            finalTunSpeed = turnControl->params->minSpeed;
+                        }
+                        else
+                        {
+                            finalTunSpeed = - turnControl->params->minSpeed;
+                        }
+                    }
+                
+                // 如果是向右走，则速度取反
+                if (!fwd)
+                  finalTunSpeed = -finalTunSpeed;
+                
+                // 把计算得到的速度输出
+                VRUN(finalTunSpeed, -finalTunSpeed);//目前不知道哪个参数应该为负，后续如运行异常需要改这里
+                task::sleep(25);
+            }
+            // 完成循环以后把车停下
+            VRUN(0, 0);
+            setStop(vex::brakeType::brake);
+            turnControl->resetpid();
         }
 
         // 直线移动函数,通过pid控制器让机器人向前走指定的距离

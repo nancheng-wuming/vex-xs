@@ -63,7 +63,7 @@ std::vector<std::vector<vex::motor *> *> _chassisMotors = {&_leftMotors, &_right
 // 底盘电机编码器定位系统运行
 Position position;
 // 直线底盘
-Ordi_StraChassis FDrive(_chassisMotors, &fwdControl, &turnControl);
+Ordi_StraChassis FDrive(_chassisMotors, &fwdControl, &turnControl,&position);
 
 /***************************
 
