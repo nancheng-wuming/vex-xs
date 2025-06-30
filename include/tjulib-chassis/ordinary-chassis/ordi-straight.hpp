@@ -56,6 +56,15 @@ namespace tjulib
         {
             // 仿照moveInches函数的写法，自行实现该函数
             // 目标：输入指定的航向，让机器人能够转到指定的航向
+            // 定义计时器
+            timer mytime;
+            mytime.clear();
+            // 定义变量和初始化参数
+            T finalTurnSpeed = 0;
+            T targetangle = angle;
+            
+            
+            fwdControl->resetpid();
         }
 
         // 直线移动函数,通过pid控制器让机器人向前走指定的距离
@@ -72,14 +81,15 @@ namespace tjulib
             
             // 循环判断条件：是否到达指定容差内指定时间以上（这里用循环次数代表时间）
             // 自行填写（用pidControl类里面的函数）
-            while (1) 
+            while (!fwdControl->overflag()) 
             {
                 // 计算当前误差（还需要往前走多少）
                 // 自行填写
-                targetDistant = 0; 
+                targetDistant = inches -
+                 ((position->LeftBaseDistance + position->RightBaseDistance) / 2 - startError); 
                 // 如果当前误差已在容差范围内，则增加cnt计数
                 // 自行填写（用pidPara里面的参数进行判断）
-                if (1)
+                if (fabs(targetDistant) < fwdControl->params->errorThreshold)
                 {
                     fwdControl->cnt++;
                 }
@@ -90,7 +100,8 @@ namespace tjulib
                 }
                 // 用pid控制器计算速度
                 // 自行填写
-                finalFwdSpeed = 0;
+                finalFwdSpeed = fwdControl->pidCalcu(inches,maxSpeed,
+                    ((position->LeftBaseDistance + position->RightBaseDistance) / 2 - startError));
 
                 // 控制最小速度，让车辆底盘的电压至少能够克服阻力
                 if (fabs(finalFwdSpeed)<fwdControl->params->minSpeed) 

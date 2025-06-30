@@ -115,22 +115,54 @@ void usercontrol()
     // 表示当按钮被按下时要执行的回调函数
     // 也就是，这里按下buttonDown按钮时，就会执行这个lambda表达式中的代码
     // 这里可以更换按键，也可以更换按键状态，共有两种：pressed()、released()
-    Controller1.ButtonDown.pressed([]()
+    extern pwm_out pwm_extend;
+    extern motor ball;
+    extern motor up;
+
+    //按下Y键则气缸调用展开侧翼，再按一次取消
+    Controller1.ButtonY.pressed([]()
                                    {
+                                    static bool state_extend = false;
+                                    if (!state_extend)
+                                    {
+                                        pwm_extend.state(100,percent);
+                                        state_extend=1;
+                                    }
+                                    else
+                                    {
+                                        pwm_extend.state(0,percent);
+                                        state_extend=0;
+                                    }
                                        // 要执行的代码可以写在这里                                      
                                    });
-    Controller1.ButtonDown.released([]()
+    //按下A键开始进球（正转），再按一次反转
+    Controller1.ButtonA.pressed([]()
                                    {
+                                    static bool ballroll = false;
+                                    if (!ballroll)
+                                    {
+                                        ball.spin(directionType::fwd, 100, velocityUnits::pct);
+                                        ballroll=1;
+                                    }
+                                    else
+                                    {
+                                        ball.spin(directionType::fwd, -100, velocityUnits::pct);
+                                        ballroll=0;
+                                    }
                                        // 要执行的代码可以写在这里                                     
                                    });
+    
+    
+    
 
+   
     while (true)
     {
         // 调试时通过按键进入自动，比赛开始的时候记得注释！
         // 记得注释！
         // 记得注释！
         // 记得注释！
-        if (Controller1.ButtonX.pressing())
+        if (Controller1.ButtonUp.pressing())
         {
             autonomous();
         }
@@ -139,18 +171,38 @@ void usercontrol()
         double deadzone = 10; 
         // 手动底盘行动代码示例
         int leftY = Controller1.Axis3.position(percent);
-        int rightX = Controller1.Axis1.position(percent);
         if (abs(leftY) < deadzone)
             leftY = 0;
+
+        int rightX = Controller1.Axis1.position(percent);
         if (abs(rightX) < deadzone)
             rightX = 0;
-        
         // 如果需要更改手感，可以在这里把输出乘上系数
         // 例如：leftY *= 1.2; rightX *= 1.2;
         // 不建议把系数设置小于1，这会让车达不到最高速度
         // 也可以自己设置一个函数来实现更复杂的手感变化
-
-        FDrive.VRUN(leftY + rightX, leftY - rightX);
+        if (rightX)
+        {
+            FDrive.VRUN(rightX,-rightX);
+        }
+        else
+        {
+            FDrive.VRUN(leftY,leftY);
+        }
+        //一直按X则抬升，一直按B则下降
+    if(Controller1.ButtonX.pressing())
+    {
+        up.spin(directionType::fwd, 1, velocityUnits::pct);
+    }
+    else if(Controller1.ButtonB.pressing())
+    {
+        up.spin(directionType::fwd, -1, velocityUnits::pct);
+    }
+    else
+    {
+        up.spin(directionType::fwd, 0, velocityUnits::pct);
+    }
+        
     }
 }
 
