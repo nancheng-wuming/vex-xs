@@ -101,6 +101,42 @@ void pre_auton()
 void autonomous()
 {
     // 你的自动程序写在这里面
+    extern motor ball;
+    bool ontheleft=0;
+    const double ballSpeed = 50;
+    T maxSpeed=100;
+    imu.calibrate();
+    while(imu.isCalibrating())
+    {
+        task::sleep(8);
+    }
+    imu.resetHeading();
+
+    ball.spin(directionType::fwd, 50, velocityUnits::pct);
+
+    FDrive.moveInches(2*cell,maxSpeed);
+    if(ontheleft)
+    {
+         FDrive.turnToAngle(90,maxSpeed,5000.0);
+
+    }
+    else{
+        FDrive.turnToAngle(-90,maxSpeed,5000.0);
+    }
+    FDrive.moveInches(0.5*cell,maxSpeed);
+    ball.spin(directionType::fwd, ballSpeed, velocityUnits::pct);
+    ball.spinFor(2000.0,timeUnits::msec,-ballSpeed,velocityUnits::pct);
+    FDrive.moveInches(-0.5*cell,maxSpeed);
+    if(ontheleft)
+    {
+         FDrive.turnToAngle(90,maxSpeed,5000.0);
+
+    }
+    else{
+        FDrive.turnToAngle(-90,maxSpeed,5000.0);
+    }
+
+
 }
 
 /***************************
@@ -162,45 +198,51 @@ void usercontrol()
         // 记得注释！
         // 记得注释！
         // 记得注释！
+        bool ontheleft=1;
         if (Controller1.ButtonUp.pressing())
         {
             autonomous();
         }
         // 手动控制的死区，防止微小的摇杆输入导致底盘抖动
         // 遥感输入的数值在-127到127之间
-        double deadzone = 10; 
+         double deadzone = 10; 
         // 手动底盘行动代码示例
         int leftY = Controller1.Axis3.position(percent);
+        int rightX = Controller1.Axis1.position(percent);
         if (abs(leftY) < deadzone)
             leftY = 0;
-
-        int rightX = Controller1.Axis1.position(percent);
         if (abs(rightX) < deadzone)
             rightX = 0;
+        
         // 如果需要更改手感，可以在这里把输出乘上系数
         // 例如：leftY *= 1.2; rightX *= 1.2;
         // 不建议把系数设置小于1，这会让车达不到最高速度
         // 也可以自己设置一个函数来实现更复杂的手感变化
-        if (rightX)
-        {
-            FDrive.VRUN(rightX,-rightX);
-        }
-        else
-        {
-            FDrive.VRUN(leftY,leftY);
-        }
+        T x=1;
+        //L1.spin(directionType::fwd, (-leftY+rightX), velocityUnits::pct);
+        //L2.spin(directionType::fwd, (-leftY+rightX), velocityUnits::pct);
+        //R1.spin(directionType::fwd,x*(-leftY-rightX), velocityUnits::pct);
+        //R2.spin(directionType::fwd, x*(-leftY-rightX), velocityUnits::pct);
+
+        FDrive.VRUN((leftY+rightX)*0.85,leftY-rightX);
+
+        
+        
+        
         //一直按X则抬升，一直按B则下降
+    
+    int y=20;
     if(Controller1.ButtonX.pressing())
     {
-        up.spin(directionType::fwd, 1, velocityUnits::pct);
+        up.spin(directionType::fwd, y, velocityUnits::pct);
     }
     else if(Controller1.ButtonB.pressing())
     {
-        up.spin(directionType::fwd, -1, velocityUnits::pct);
+        up.spin(directionType::fwd, -y, velocityUnits::pct);
     }
     else
     {
-        up.spin(directionType::fwd, 0, velocityUnits::pct);
+        up.stop(hold);
     }
         
     }
