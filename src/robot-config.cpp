@@ -14,11 +14,11 @@ using namespace vex;
         physical configurations
 
 *************************************/
-const double r_wheel = 3.15/ 2;                      // 车轮半径(英寸)
-const double gear_ratio = 0.8;                         // 底盘电机-轮的齿轮传动比（加速配比就大于1，减速配比就小于1）
+const double r_wheel = 4.13/ 2;                      // 车轮半径(英寸)
+const double gear_ratio = 1;                         // 底盘电机-轮的齿轮传动比（加速配比就大于1，减速配比就小于1）
 const double r_motor = r_wheel * gear_ratio;         // 电机转角-电机转周的换算比
-const double cell = 24;                              // 一个地垫长度(inches)
-
+const double cell = 22.83;                              // 一个地垫长度(inches)
+ 
 /*************************************
 
             VEX devices
@@ -37,10 +37,10 @@ brain  Brain;
 // std::vector<vex::motor*> _rightMotors = {&R1, &R2};
 
 
-motor L1 = motor(PORT11, ratio18_1, true);
-motor L2 = motor(PORT12, ratio18_1, true);
-motor R1 = motor(PORT13, ratio18_1, false);
-motor R2 = motor(PORT14, ratio18_1, false);
+motor L1 = motor(PORT2, ratio18_1, false);
+motor L2 = motor(PORT1, ratio18_1, false);
+motor R1 = motor(PORT12, ratio18_1, true);
+motor R2 = motor(PORT11, ratio18_1, true);
 
 
 
@@ -52,14 +52,18 @@ std::vector<vex::motor*> _rightMotors = {&R1, &R2};
 // 遥控器
 controller Controller1 = controller(primary); //不要修改
 // imu惯性传感器
-inertial imu = inertial(PORT10);
+inertial imu = inertial(PORT13);
 
 // 其他电机
-motor ball = motor(PORT15,ratio18_1,false);
-motor up = motor(PORT16,ratio36_1,false);
+motor ball = motor(PORT14,ratio18_1,true);
+motor up = motor(PORT3,ratio36_1,true);
 
 //气缸
-pwm_out pwm_extend = pwm_out(Brain.ThreeWirePort.B);
+pwm_out pwm_extend_left = pwm_out(Brain.ThreeWirePort.D);
+pwm_out pwm_extend_right = pwm_out(Brain.ThreeWirePort.E);
+
+
+
 
 
 // 这个函数不要删也不要动

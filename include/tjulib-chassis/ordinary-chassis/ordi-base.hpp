@@ -23,6 +23,7 @@ namespace tjulib
         // 直接给底盘电机电压，进行运动
         void VRUN(T Lspeed, T Rspeed)
         {
+            Lspeed=Lspeed*0.825;
             for (vex::motor *motor : (_leftMotors))
             {
                 vexMotorVoltageSet(motor->index(), Lspeed * 12700.0 / 100.0);
