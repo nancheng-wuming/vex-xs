@@ -63,13 +63,14 @@ namespace tjulib
             T finalTunSpeed = 0;
             T targetangle = angle;
              turnControl->resetpid();
-            angle=getWrap360(angle);
+            if (!fwd)
+                angle=getWrap360(angle);
             // 循环判断条件：是否到达指定容差内指定时间以上（这里用循环次数代表时间）
             // 自行填写（用pidControl类里面的函数）
             while (!fwdControl->overflag()) 
             {
                 // 计算当前误差（还需要往前走多少）
-                T nowangle = imu.heading();//imu缺参条件下返回角度制
+                T nowangle = imu.angle();//imu缺参条件下返回角度制
                 T Error=angle-nowangle;
                 // 自行填写
                 // 如果当前误差已在容差范围内，则增加cnt计数

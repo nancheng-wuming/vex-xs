@@ -41,7 +41,7 @@ competition Competition;
     stop_num               (int_type)
 */
 
-pidParams fwd_pid(5, 0.1, 0.05, 0.5, 1, 10, 10),  //往前直行一段指定距离所使用的PID参数
+pidParams fwd_pid(4, 0.1, 0.05, 0.5, 1, 10, 10),  //往前直行一段指定距离所使用的PID参数
     turn_pid(2.5, 0, 0.12, 0.2, 0.75, 10, 2);       //转向指定角度所使用的PID参数                     
                                          //这里的PID参数需要根据实际情况进行调整,调PID是重要环节
                                          //一个可能的PID参数配置是(不准确,只是表示每个参数对应的数量级)：
@@ -100,90 +100,47 @@ void pre_auton()
 
 void autonomous()
 {
+    timer mytime();
     // 你的自动程序写在这里面
+    extern motor up;
     extern motor ball;
-    extern pwm_out pwm_extend_left;
     extern pwm_out pwm_extend_right;
-
-    bool ontheleft=0;
-    const double ballSpeed = 50;
     T maxSpeed=80;
-    imu.calibrate();
-    while(imu.isCalibrating())
-    {
-        task::sleep(8);
-    }
+    //右相为正
     imu.resetHeading();
-    FDrive.moveInches(cell,maxSpeed);
+    int init_Position=2;//左上角和右下角是1，放的靠后一点（以头为准），左下和右上是2 
+    double waittime=2000.0;
+    switch(init_Position)
+    {
+        case 1:
+        {
+        pwm_extend_right.state(100,percent);
+        FDrive.moveInches(cell*0.5,maxSpeed);
+        FDrive.turnToAngle(-90,80,waittime);
+        // FDrive.turnToAngle(90,80,waittime);
+        // pwm_extend_right.state(0,percent);
+        // int initposition = up.position(degrees);
+        // int endposition = initposition -150;
+        // up.spinToPosition(endposition,degrees,50,velocityUnits::pct);
+        // FDrive.moveInches(-cell*2.5,maxSpeed);
+        break;
+        }
 
-    // if(ontheleft)
-    // {
-    //     pwm_extend_left.state(0,percent);
-    // }
-    // else
-    // {
-    //     pwm_extend_right.state(0,percent);
-    // }
-    // FDrive.moveInches(0.5*cell,maxSpeed);
-    // if(ontheleft)
-    // {
-    //     FDrive.turnToAngle(90,80,5000.0);
-    // }
-    // else
-    // {
-    //     FDrive.turnToAngle(-90,80,5000.0);
-    // }
+        case 2:
+        {
+        pwm_extend_right.state(100,percent);
+        FDrive.moveInches(-cell*0.5,maxSpeed);
+        timer MYTIME;
+        MYTIME.clear();
+        while(MYTIME.time(msec) <= 15000.0)
+        {
+          FDrive.VRUN(-80, 80);
+        }
+        break;
+        }
+        
+    }  
     
-    // FDrive.moveInches(cell,maxSpeed);
-    // task::sleep(8);
-
-
-    // FDrive.moveInches(-cell,maxSpeed);
-
-    // if(ontheleft)
-    // {
-    //     FDrive.turnToAngle(90,80,5000.0);
-    // }
-    // else
-    // {
-    //     FDrive.turnToAngle(-90,80,5000.0);
-    // }
-
-    // task::sleep(8);
-    // if(ontheleft)
-    // {
-    //     pwm_extend_left.state(100,percent);
-    // }
-    // else
-    // {
-    //     pwm_extend_right.state(100,percent);
-    // }
-    // task::sleep(8);
-
-    // FDrive.moveInches(2*cell,maxSpeed);
-
-
-    // FDrive.moveInches(2*cell,maxSpeed);
-    // if(ontheleft)
-    // {
-    //      FDrive.turnToAngle(90,maxSpeed,5000.0);
-
-    // }
-    // else{
-    //     FDrive.turnToAngle(-90,maxSpeed,5000.0);
-    // }
-    // FDrive.moveInches(0.5*cell,maxSpeed);
-    // ball.spin(directionType::fwd, ballSpeed, velocityUnits::pct);
-    // ball.spinFor(2000.0,timeUnits::msec,-ballSpeed,velocityUnits::pct);
-    // FDrive.moveInches(-0.5*cell,maxSpeed);
-    // if(ontheleft)
-    // {
-    //      FDrive.turnToAngle(90,maxSpeed,5000.0);
-
-    // }
-    // else{
-    //     FDrive.turnToAngle(-90,maxSpeed,5000.0);
-    // }
 
 
 }
@@ -204,7 +161,7 @@ void usercontrol()
     extern pwm_out pwm_extend_right;
     extern motor ball;
     extern motor up;
-
+    extern pwm_out pwm_up;
 
 
     //按下R1键则气缸展开侧翼，再按一次取消
@@ -213,11 +170,13 @@ void usercontrol()
                                     static bool state_extend = false;
                                     if (!state_extend)
                                     {
+                                        printf("2\n");
                                         pwm_extend_right.state(100,percent);
                                         state_extend=1;
                                     }
                                     else
                                     {
+                                        printf(" 1\n");
                                         pwm_extend_right.state(0,percent);
                                         state_extend=0;
                                     }
@@ -225,10 +184,23 @@ void usercontrol()
                                    });
 
 
-    
-    //按下A键开始进球（正转），再按一次反转
-    
-    static int ballroll = 0;
+                                   
+    //抬升气缸控制
+     Controller1.ButtonL1.pressed([]()
+                                   {
+                                    static bool state = false;
+                                    if (!state)
+                                    {
+                                        pwm_up.state(100,percent);
+                                        state=1;
+                                    }
+                                    else
+                                    {
+                                        pwm_up.state(0,percent);
+                                        state=0;
+                                    }
+                                       // 要执行的代码可以写在这里                                      
+                                   });
 
 
     Controller1.ButtonA.pressed([]()
@@ -241,21 +213,6 @@ void usercontrol()
 
     Controller1.ButtonB.pressed([]()
                                    {
-                                    // if (ball.isSpinning()) 
-                                    // {
-                                    //     ball.stop();
-                                    //     ballroll = 0;
-                                    // }
-                                    // if(!ballroll)
-                                    // {
-                                    //     ball.spin(directionType::fwd, -100, velocityUnits::pct);
-                                    //     ballroll = 1;
-                                    // }
-                                    // else
-                                    // {
-                                    //     ball.stop();
-                                    //     ballroll = 0;
-                                    // }
                                     ball.spin(directionType::fwd, -100, velocityUnits::pct);
 
     
@@ -264,8 +221,7 @@ void usercontrol()
     
     
     
-
-   
+           
     while (true)
     {
         // 调试时通过按键进入自动，比赛开始的时候记得注释！
@@ -313,15 +269,6 @@ void usercontrol()
         {
             up.stop(hold);
         }
-
-       
-
-        
-        
-        
-    
-    
-        
     }
 }
 
